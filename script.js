@@ -56,24 +56,30 @@ async function fetchCoordinates(city) {
 }
 
  async function fetchWeather(lat, lon) {
-        const URL2 = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+    const URL2 = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,precipitation&timezone=auto`;
 
         try {
             const response = await fetch(URL2);
             const data = await response.json();
 
-            if (data && data.current_weather) {
-                const temperature = data.current_weather.temperature;
-                temperatureDiv.textContent = `${temperature}°C`;
-                details.textContent = `Température actuelle mise à jour.`;
-            } else {
+            if (!data || !data.current_weather) {
                 temperatureDiv.textContent = "-°C";
                 details.textContent = "Données météo indisponibles.";
+                return;
             }
+            const temperature = data.current_weather.temperature;
+            const currentTime = data.current_weather.time;
+            const timeIndex = data.hourly.time.indexOf(currentTime);
+            const humidity = data.hourly.relative_humidity_2m[timeIndex];
+            const precipitation = data.hourly.precipitation[timeIndex];
+            
+            temperatureDiv.textContent = `${temperature}°C`;
+            details.textContent = `Humidité : ${humidity}% · Précipitation : ${precipitation} mm`;
+
         } catch (error) {
             console.error("Erreur lors de la récupération de la météo :", error);
             temperatureDiv.textContent = "-°C";
-            details.textContent = "Erreur lors de la récupération de la météo.";
+            details.textContent = "Erreur lors de la récupération des données météo.";
         }
     }
 });
